@@ -1,0 +1,13 @@
+# Thai Wiki Article Connection Demo
+
+## Data
+
+THWikIR
+
+## Demo
+
+[Link](wiki-thai-graph-dashboard.vercel.app)
+
+## Screenshot
+
+![Example](thumbnail.png)
