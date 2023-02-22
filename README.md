@@ -6,7 +6,7 @@ THWikIR
 
 ## Demo
 
-[Link](wiki-thai-graph-dashboard.vercel.app)
+[Link](https://wiki-thai-graph-dashboard.vercel.app)
 
 ## Screenshot
 
