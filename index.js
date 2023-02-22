@@ -23,8 +23,26 @@ import { cropToLargestConnectedComponent } from "graphology-components";
 
 
 function convertIntToColor(integer) {
-  // return "#" + (integer * 5000000).toString(parseInt(16)).padStart(6, '0')
   return "#" + (integer * 5000000 & 0x00FFFFFF).toString(parseInt(16)).padStart(6, '0')
+}
+
+function selectNode(nodeId, graph) {
+  graph.forEachNode((otherNode) => {
+    graph.setNodeAttribute(otherNode, "hidden", false)
+  })
+  const nodeName = ''
+  graph.forEachNode((otherNode, attributes) => {
+    const isNeighbors = graph.areNeighbors(nodeId, otherNode)
+    if (!isNeighbors && nodeId != otherNode) {
+      graph.setNodeAttribute(otherNode, "hidden", true)
+    }
+    if (nodeId == otherNode) {
+      nodeName = attributes.label
+    }
+  })
+
+  const selectedTopicEl = document.getElementsByClassName('current-topic')
+  selectedTopicEl.innerHTML = nodeName
 }
 
 // 1. Load CSV file:
@@ -95,7 +113,6 @@ Papa.parse("./public/qrels_all_df_left_merged2.csv", {
     // const COLORS = { institution: "#FA5A3D", subject: "#5A75DB" };
     // const GENED_COLOR = '#3EC70B'
     graph.forEachNode((node, attributes) => {
-      // console.log(parseInt(attributes.topic), '??')
       const colorString = convertIntToColor(attributes.topic);
       return graph.setNodeAttribute(node, "color", parseInt(attributes.topic) != -1 ? colorString : '#808080')
     },
@@ -134,12 +151,8 @@ Papa.parse("./public/qrels_all_df_left_merged2.csv", {
 
     s.on('clickNode', function (e) {
       var nodeId = e.node;
-      graph.forEachNode((otherNode) => {
-        const isNeighbors = graph.areNeighbors(nodeId, otherNode)
-        if (!isNeighbors && nodeId != otherNode) {
-          graph.setNodeAttribute(otherNode, "hidden", true)
-        }
-      })
+
+      selectNode(nodeId, graph)
     });
 
     // s.on('doubleClickNode', function (e) {
@@ -161,12 +174,20 @@ Papa.parse("./public/qrels_all_df_left_merged2.csv", {
           graph.setNodeAttribute(otherNode, "hidden", true)
         }
       })
+      const selectedTopicEl = document.getElementById('current-topic')
+      selectedTopicEl.innerHTML = graphTable[topicId]
     });
 
     s.on("clickStage", (e) => {
       graph.forEachNode((otherNode) => {
         graph.setNodeAttribute(otherNode, "hidden", false)
       })
+
+      const selectedTopicEl = document.getElementById('current-topic')
+      selectedTopicEl.innerHTML = 'ทั้งหมด'
+
+      const searchResult = document.getElementsByClassName('search-result')[0]
+      searchResult.replaceChildren()
     });
 
     const topics = []
@@ -175,14 +196,6 @@ Papa.parse("./public/qrels_all_df_left_merged2.csv", {
         name: graphTable[item], color: convertIntToColor(parseInt(item))
       })
     }
-
-    console.log(graphTable, 'graphTable')
-
-    // const topics = [
-    //   { name: "Topic 1", color: "#FF0000" },
-    //   { name: "Topic 2", color: "#00FF00" },
-    //   // Add more objects for additional topics and colors
-    // ];
 
     // Get the table body element
     const tbody = document.querySelector("tbody");
@@ -200,6 +213,9 @@ Papa.parse("./public/qrels_all_df_left_merged2.csv", {
             graph.setNodeAttribute(otherNode, "hidden", true)
           }
         })
+
+        const selectedTopicEl = document.getElementById('current-topic')
+        selectedTopicEl.innerHTML = graphTable[topicId]
       })
 
       // Create a new table cell element for the topic name
@@ -208,7 +224,6 @@ Papa.parse("./public/qrels_all_df_left_merged2.csv", {
 
       // Create a new table cell element for the topic color
       const colorCell = document.createElement("td");
-      console.log(topic.color, 'topic.color')
       colorCell.style.backgroundColor = topic.color;
       colorCell.style.width = '20px';
       // Add the cells to the row
@@ -217,6 +232,42 @@ Papa.parse("./public/qrels_all_df_left_merged2.csv", {
 
       // Add the row to the table body
       tbody.appendChild(tr);
+    })
+
+
+    const searchInputEl = document.getElementById('search-input')
+    searchInputEl.addEventListener('keyup', e => {
+      const searchValue = e.target.value
+      const result = []
+      const resultId = []
+      graph.forEachNode((otherNode, attributes) => {
+        // console.log(attributes.label, 'attributes.label')
+        if (attributes.label && attributes.label.includes(searchValue)) {
+          result.push(attributes.label)
+          resultId.push(otherNode)
+        }
+      })
+
+
+      const searchResult = document.getElementsByClassName('search-result')[0]
+      searchResult.replaceChildren()
+      if (searchValue === '') {
+        return
+      }
+      for (let i = 0; i < result.length; i++) {
+        const label = result[i]
+        const searchItem = document.createElement('div')
+        searchItem.addEventListener(
+          'click', e => {
+            const nodeId = e.target.id
+            selectNode(nodeId, graph)
+            searchResult.replaceChildren()
+          }
+        )
+        searchItem.textContent = label;
+        searchItem.id = resultId[i];
+        searchResult.appendChild(searchItem);
+      }
     })
   },
 });
