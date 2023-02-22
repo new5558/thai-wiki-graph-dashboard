@@ -30,13 +30,13 @@ function selectNode(nodeId, graph) {
   graph.forEachNode((otherNode) => {
     graph.setNodeAttribute(otherNode, "hidden", false)
   })
-  const nodeName = ''
+  let nodeName = ''
   graph.forEachNode((otherNode, attributes) => {
     const isNeighbors = graph.areNeighbors(nodeId, otherNode)
     if (!isNeighbors && nodeId != otherNode) {
       graph.setNodeAttribute(otherNode, "hidden", true)
     }
-    if (nodeId == otherNode) {
+    if (nodeId === otherNode) {
       nodeName = attributes.label
     }
   })
